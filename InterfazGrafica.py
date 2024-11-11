@@ -1,8 +1,6 @@
 import streamlit as st
 import numpy as np
-from PIL import Image
-import cv2
-import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw
 
 # Título de la aplicación
 st.title("Detección de Leptospiras (Interfaz Simulada)")
@@ -21,27 +19,23 @@ if uploaded_file is not None:
     # Simulación de predicción
     st.write("Analizando la imagen...")
     resultado_simulado = np.random.choice(["Leptospiras detectadas", "No se detectaron leptospiras"])
-    
+
     # Mostrar el resultado simulado
     if resultado_simulado == "Leptospiras detectadas":
         st.success("Leptospiras detectadas en la imagen.")
     else:
         st.error("No se detectaron leptospiras en la imagen.")
 
-    # Simulación de Grad-CAM
+    # Generar un heatmap simulado usando PIL
     st.write("Generando mapa de calor (simulado)...")
-    img_array = np.array(image.resize((512, 512)))
-    heatmap = np.zeros_like(img_array[:, :, 0], dtype=np.uint8)
+    heatmap = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(heatmap)
 
-    # Crear un heatmap simulado con círculos
+    # Dibujar círculos simulados en el heatmap
     for _ in range(5):
-        x, y = np.random.randint(0, 512, size=2)
-        cv2.circle(heatmap, (x, y), radius=30, color=255, thickness=-1)
+        x, y = np.random.randint(0, image.size[0]), np.random.randint(0, image.size[1])
+        draw.ellipse((x-30, y-30, x+30, y+30), fill=(255, 0, 0, 128))
 
-    # Aplicar colormap al heatmap simulado
-    heatmap_colored = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-    superimposed_img = cv2.addWeighted(cv2.cvtColor(np.uint8(img_array), cv2.COLOR_RGB2BGR), 0.6, heatmap_colored, 0.4, 0)
-
-    # Mostrar el heatmap superpuesto
-    st.image(cv2.cvtColor(superimposed_img, cv2.COLOR_BGR2RGB), caption="Heatmap Simulado", use_column_width=True)
-
+    # Superponer el heatmap sobre la imagen original
+    superimposed_img = Image.alpha_composite(image.convert("RGBA"), heatmap)
+    st.image(superimposed_img, caption="Heatmap Simulado", use_column_width=True)
